@@ -99,34 +99,51 @@ async function firebaseRegister(name, email, password) {
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await cred.user.updateProfile({ displayName: name });
-    await ensureUserProfile(cred.user, { name });
+    // Best-effort Firestore profile — don't block on failure
+    try { await ensureUserProfile(cred.user, { name }); } catch (_) {}
     setSession({ uid: cred.user.uid, email, name, role: 'user' });
     return { ok: true };
   } catch (e) {
-    return { ok: false, msg: firebaseErrorMsg(e.code) };
+    // Only fail if it's an auth error (not Firestore)
+    if (e.code && e.code.startsWith('auth/')) {
+      return { ok: false, msg: firebaseErrorMsg(e.code) };
+    }
+    return { ok: false, msg: firebaseErrorMsg(e.code || 'auth/internal-error') };
   }
 }
 
 /* ── Login (Firebase) ───────────────────────────────────── */
 async function firebaseLogin(email, password) {
+  let cred;
   try {
-    const cred = await auth.signInWithEmailAndPassword(email, password);
-    await ensureUserProfile(cred.user);
-    const profile = await getUserProfile(cred.user.uid);
-    if (profile && profile.banned) {
-      await auth.signOut();
-      return { ok: false, msg: 'Your account has been suspended.' };
-    }
-    setSession({
-      uid: cred.user.uid,
-      email: cred.user.email,
-      name: profile?.name || cred.user.email.split('@')[0],
-      role: profile?.role || 'user'
-    });
-    return { ok: true };
+    cred = await auth.signInWithEmailAndPassword(email, password);
   } catch (e) {
+    // Auth itself failed — return the auth error
     return { ok: false, msg: firebaseErrorMsg(e.code) };
   }
+
+  // Auth succeeded — now try Firestore (best-effort, don't block login)
+  let profile = null;
+  try {
+    await ensureUserProfile(cred.user);
+    profile = await getUserProfile(cred.user.uid);
+  } catch (_) {
+    // Firestore unavailable — still allow login with auth data
+    console.warn('Firestore unavailable, using auth data only.');
+  }
+
+  if (profile && profile.banned) {
+    await auth.signOut();
+    return { ok: false, msg: 'Your account has been suspended.' };
+  }
+
+  setSession({
+    uid: cred.user.uid,
+    email: cred.user.email,
+    name: profile?.name || cred.user.displayName || cred.user.email.split('@')[0],
+    role: profile?.role || 'user'
+  });
+  return { ok: true };
 }
 
 /* ── Fallback register/login (localStorage) ─────────────── */
@@ -175,8 +192,11 @@ function firebaseErrorMsg(code) {
     'auth/too-many-requests': 'Too many attempts. Try again later.',
     'auth/network-request-failed': 'Network error. Check your internet connection.',
     'auth/invalid-credential': 'Invalid email or password.',
+    'auth/internal-error': 'An internal error occurred. Please try again.',
+    'auth/configuration-not-found': 'Firebase is not configured. Contact the admin.',
+    'unavailable': 'Service temporarily unavailable. Please try again.',
   };
-  return msgs[code] || `Authentication error: ${code}`;
+  return msgs[code] || `Sign-in error: ${code}`;
 }
 
 /* ── UI helpers ─────────────────────────────────────────── */
