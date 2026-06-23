@@ -1,1 +1,7 @@
 .vercel
+service-account.json
+node_modules/
+package-lock.json
+package.json
+make-admin.js
+

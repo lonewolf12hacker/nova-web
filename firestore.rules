@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ─────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── Users collection ─────────────────────────────────────
+    // Users can read/write only their own profile.
+    // Admins can read and update any profile (e.g. ban/unban, change role).
+    match /users/{uid} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);                 // first login creates profile
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Commands collection ───────────────────────────────────
+    // Users can log their own commands. Admins can read all.
+    match /commands/{docId} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read:   if isAdmin() ||
+                       (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Config collection (admin only) ────────────────────────
+    // Stores global Nova API URL and other settings.
+    match /config/{docId} {
+      allow read:  if isSignedIn();   // all logged-in users can read config
+      allow write: if isAdmin();      // only admins can change config
+    }
+
+    // ── Block everything else ─────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
