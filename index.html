@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Nova — Your personal AI assistant. Control your PC from anywhere with voice commands and intelligent automation."/>
+  <title>Nova AI — Your Personal AI Assistant</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* ── Hero orb ── */
+    .hero-orb-wrap { display:flex; justify-content:center; margin-bottom:40px; }
+    .hero-orb {
+      width:160px; height:160px; border-radius:50%;
+      background: radial-gradient(circle at 38% 32%, #00f7ff 0%, #7b2fff 55%, #04060e 100%);
+      box-shadow: 0 0 60px rgba(0,247,255,0.45), 0 0 120px rgba(123,47,255,0.3), inset 0 0 40px rgba(0,247,255,0.15);
+      animation: orb-float 5s ease-in-out infinite;
+      position:relative;
+    }
+    .hero-orb::after {
+      content:'';
+      position:absolute; inset:-14px;
+      border-radius:50%;
+      border:1.5px solid rgba(0,247,255,0.25);
+      animation: orb-ring 3s linear infinite;
+    }
+    @keyframes orb-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+    @keyframes orb-ring  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    /* ── Particle canvas ── */
+    #particle-canvas { position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.55; }
+
+    /* ── Feature cards ── */
+    .feat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; }
+
+    /* ── Stats strip ── */
+    .stats-strip { background:rgba(0,247,255,0.04); border:1px solid var(--border); border-radius:var(--r-md); padding:48px; display:grid; grid-template-columns:repeat(4,1fr); gap:32px; text-align:center; }
+    .stat-divider { width:1px; background:var(--border); }
+
+    /* ── Demo card ── */
+    .demo-terminal {
+      background:#080b16; border:1px solid var(--border); border-radius:var(--r-md);
+      padding:0; overflow:hidden; position:relative;
+    }
+    .term-bar { background:#111420; padding:12px 20px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); }
+    .term-dot { width:11px; height:11px; border-radius:50%; }
+    .term-body { padding:28px; font-family:'Courier New',monospace; font-size:0.88rem; line-height:2; min-height:200px; }
+    .term-line { display:flex; gap:12px; }
+    .term-prompt { color:var(--violet); font-weight:700; }
+    .term-cmd    { color:var(--cyan); }
+    .term-reply  { color:rgba(216,234,255,0.65); padding-left:24px; }
+    .term-cursor { display:inline-block; width:8px; height:1em; background:var(--cyan); animation:blink 1s step-end infinite; vertical-align:middle; }
+    @keyframes blink { 50%{opacity:0} }
+
+    /* ── CTA section ── */
+    .cta-wrap { text-align:center; padding:100px 0; }
+    .cta-glow-ring {
+      width:300px; height:300px; border-radius:50%; margin:0 auto 48px;
+      background: radial-gradient(circle, rgba(0,247,255,0.12) 0%, transparent 70%);
+      border:1px solid rgba(0,247,255,0.15);
+      display:flex; align-items:center; justify-content:center;
+      animation: pulse-ring 3s ease-in-out infinite;
+    }
+    @keyframes pulse-ring { 0%,100%{box-shadow:0 0 0 0 rgba(0,247,255,0.15)} 50%{box-shadow:0 0 0 30px rgba(0,247,255,0)} }
+
+    /* ── Testimonials ── */
+    .testimonial-card { border-left:3px solid var(--violet); }
+    .stars { color:#ffd166; letter-spacing:2px; margin-bottom:12px; }
+
+    @media(max-width:900px){ .stats-strip { grid-template-columns:1fr 1fr; } .stat-divider{display:none;} }
+    @media(max-width:600px){ .stats-strip { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+
+<!-- ════ NAVBAR ════ -->
+<nav class="navbar" id="navbar">
+  <div class="container flex-between">
+    <a href="index.html" class="nav-logo">⬡ NOVA</a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#features"  class="nav-link">Features</a></li>
+      <li><a href="#demo"      class="nav-link">Demo</a></li>
+      <li><a href="#pricing"   class="nav-link">Pricing</a></li>
+      <li><a href="login.html" class="btn btn-outline" style="padding:9px 22px;font-size:0.88rem">Sign In</a></li>
+      <li><a href="login.html#register" class="btn btn-primary" style="padding:9px 22px;font-size:0.88rem">Get Started</a></li>
+    </ul>
+    <div class="nav-hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ════ HERO ════ -->
+<section class="hero" id="home">
+  <img src="assets/nova-bg.png" class="hero-video" alt="Nova background"/>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="container" style="text-align:center;padding-top:120px;padding-bottom:80px;">
+      <div class="hero-orb-wrap">
+        <div class="hero-orb"></div>
+      </div>
+      <div class="badge badge-cyan reveal visible" style="margin:0 auto 24px;width:fit-content;">
+        ✦ AI-Powered Assistant
+      </div>
+      <h1 class="display-1 gradient-text reveal visible" style="margin-bottom:24px;">
+        Meet Nova
+      </h1>
+      <p class="lead reveal visible" style="max-width:580px;margin:0 auto 40px;">
+        Your intelligent AI companion — control your PC with your voice, from anywhere on Earth. No cloud lock-in. 100% on your machine.
+      </p>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;" class="reveal visible">
+        <a href="login.html" class="btn btn-primary btn-lg">Launch Nova →</a>
+        <a href="#demo" class="btn btn-outline btn-lg">Watch Demo</a>
+      </div>
+      <p style="margin-top:28px;font-size:0.8rem;color:var(--muted);" class="reveal visible">
+        🔒 Fully local — your data never leaves your machine
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════ STATS ════ -->
+<section class="section-sm">
+  <div class="container">
+    <div class="stats-strip reveal">
+      <div>
+        <div class="stat-number">100%</div>
+        <div class="caption" style="margin-top:6px;">Offline Capable</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div>
+        <div class="stat-number">&lt;2s</div>
+        <div class="caption" style="margin-top:6px;">Response Time</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div>
+        <div class="stat-number">50+</div>
+        <div class="caption" style="margin-top:6px;">Commands</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div>
+        <div class="stat-number">∞</div>
+        <div class="caption" style="margin-top:6px;">Global Access</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FEATURES ════ -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-label reveal">
+      <div class="caption">What Nova Can Do</div>
+      <h2 class="display-2">Built for <span class="gradient-text">Power Users</span></h2>
+      <p class="lead" style="max-width:520px;margin:0 auto;">Everything you need to control your digital world — by voice or text, from any device.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="card reveal">
+        <div class="feat-icon">🎤</div>
+        <h3 class="heading" style="margin-bottom:12px;">Voice Control</h3>
+        <p class="lead" style="font-size:0.95rem;">Industry-grade VAD recording. Whisper offline + Google online fallback. Just speak naturally.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon">🤖</div>
+        <h3 class="heading" style="margin-bottom:12px;">Local AI Chat</h3>
+        <p class="lead" style="font-size:0.95rem;">Powered by Ollama and Mistral. Full conversation memory. Runs entirely on your hardware — zero data shared.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon">💻</div>
+        <h3 class="heading" style="margin-bottom:12px;">PC Automation</h3>
+        <p class="lead" style="font-size:0.95rem;">Open apps, search the web, lock screen, take screenshots, manage files and control system volume.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon">🌐</div>
+        <h3 class="heading" style="margin-bottom:12px;">Global Access</h3>
+        <p class="lead" style="font-size:0.95rem;">Secure ngrok HTTPS tunnel. Access your PC from your phone, tablet or any browser worldwide.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon">📱</div>
+        <h3 class="heading" style="margin-bottom:12px;">Mobile Ready</h3>
+        <p class="lead" style="font-size:0.95rem;">Beautiful mobile portal with voice input, animated orb, and full command history. Works on iOS and Android.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon">⚡</div>
+        <h3 class="heading" style="margin-bottom:12px;">Instant Responses</h3>
+        <p class="lead" style="font-size:0.95rem;">Sub-2-second latency for OS commands. AI responses stream in real time with context-aware memory.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ DEMO ════ -->
+<section class="section" id="demo">
+  <div class="container">
+    <div class="section-label reveal">
+      <div class="caption">See It In Action</div>
+      <h2 class="display-2">Talk to Nova. <span class="gradient-text">Get Things Done.</span></h2>
+    </div>
+    <div class="grid-2 gap-8" style="align-items:center;">
+      <div class="reveal">
+        <div class="demo-terminal">
+          <div class="term-bar">
+            <div class="term-dot" style="background:#ff5f56;"></div>
+            <div class="term-dot" style="background:#ffbd2e;"></div>
+            <div class="term-dot" style="background:#27c93f;"></div>
+            <span style="margin-left:12px;font-size:0.75rem;color:var(--muted);font-family:'Courier New',monospace;">nova — ai terminal</span>
+          </div>
+          <div class="term-body" id="demo-terminal">
+            <div class="term-line"><span class="term-prompt">you</span><span class="term-cmd">  › open spotify</span></div>
+            <div class="term-line"><span class="term-reply">Nova: Opening Spotify ✓</span></div>
+            <div class="term-line"><span class="term-prompt">you</span><span class="term-cmd">  › what's the weather like?</span></div>
+            <div class="term-line"><span class="term-reply">Nova: I can search that for you — searching Google now...</span></div>
+            <div class="term-line"><span class="term-prompt">you</span><span class="term-cmd">  › lock the computer</span></div>
+            <div class="term-line"><span class="term-reply">Nova: PC locked. See you later! 🔒</span></div>
+            <div class="term-line"><span class="term-prompt">you</span><span class="term-cmd">  › <span class="term-cursor"></span></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="display:flex;flex-direction:column;gap:20px;">
+        <div class="card card-sm">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <span style="font-size:1.8rem;">🎯</span>
+            <div>
+              <div class="heading" style="font-size:0.9rem;margin-bottom:4px;">Natural Language</div>
+              <div class="lead" style="font-size:0.85rem;">Say commands in plain English. No syntax to memorize.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-sm">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <span style="font-size:1.8rem;">🔄</span>
+            <div>
+              <div class="heading" style="font-size:0.9rem;margin-bottom:4px;">Remembers Context</div>
+              <div class="lead" style="font-size:0.85rem;">Full conversation history. Pick up where you left off.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-sm">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <span style="font-size:1.8rem;">🛡️</span>
+            <div>
+              <div class="heading" style="font-size:0.9rem;margin-bottom:4px;">Privacy First</div>
+              <div class="lead" style="font-size:0.85rem;">Every byte runs on your machine. Encrypted tunnel only.</div>
+            </div>
+          </div>
+        </div>
+        <a href="login.html" class="btn btn-primary" style="width:fit-content;">Try Nova Now →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════ TESTIMONIALS ════ -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-label reveal">
+      <div class="caption">Completely Free</div>
+      <h2 class="display-2">Open Source. <span class="gradient-text">Forever.</span></h2>
+      <p class="lead" style="max-width:440px;margin:0 auto;">Nova runs entirely on your own hardware. No subscription. No hidden fees.</p>
+    </div>
+    <div class="grid-3 reveal">
+      <div class="card testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="lead" style="font-size:0.95rem;margin-bottom:16px;">"Locked my PC from my phone while I was downstairs. Nova is genuinely magic."</p>
+        <div style="font-size:0.8rem;color:var(--muted);">— Alex K., Power User</div>
+      </div>
+      <div class="card testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="lead" style="font-size:0.95rem;margin-bottom:16px;">"The AI answers are instant and the voice recognition is shockingly accurate offline."</p>
+        <div style="font-size:0.8rem;color:var(--muted);">— Priya M., Developer</div>
+      </div>
+      <div class="card testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="lead" style="font-size:0.95rem;margin-bottom:16px;">"I control my home server with voice commands from my phone. Absolutely incredible."</p>
+        <div style="font-size:0.8rem;color:var(--muted);">— James T., Sysadmin</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ CTA ════ -->
+<section class="section" style="padding:60px 0 120px;">
+  <div class="container">
+    <div class="cta-wrap reveal">
+      <div class="cta-glow-ring">
+        <div class="hero-orb" style="width:120px;height:120px;"></div>
+      </div>
+      <div class="display-2" style="margin-bottom:20px;">Ready to meet <span class="gradient-text">Nova?</span></div>
+      <p class="lead" style="max-width:400px;margin:0 auto 40px;">Create a free account and connect to your Nova assistant in under 60 seconds.</p>
+      <a href="login.html" class="btn btn-primary btn-lg">Get Started Free →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <div class="container flex-between" style="flex-wrap:wrap;gap:16px;">
+    <div class="nav-logo" style="font-size:1.1rem;">⬡ NOVA</div>
+    <div style="display:flex;gap:24px;font-size:0.85rem;color:var(--muted);">
+      <a href="index.html" style="color:var(--muted);">Home</a>
+      <a href="login.html" style="color:var(--muted);">Login</a>
+      <a href="dashboard.html" style="color:var(--muted);">Portal</a>
+    </div>
+    <div style="color:var(--muted);font-size:0.8rem;">© 2025 Nova AI — Built with ♥ locally</div>
+  </div>
+</footer>
+
+<script>
+/* Navbar scroll effect */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 50);
+});
+
+/* Hamburger */
+function toggleMenu() {
+  document.getElementById('nav-links').classList.toggle('open');
+}
+
+/* Particle system */
+(function() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+  for(let i=0;i<80;i++){
+    particles.push({
+      x:rand(0,W), y:rand(0,H),
+      vx:rand(-0.25,0.25), vy:rand(-0.4,-0.08),
+      r:rand(1,2.5), alpha:rand(0.2,0.7),
+      color: Math.random()>0.5 ? '0,247,255' : '123,47,255'
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${p.color},${p.alpha})`;
+      ctx.fill();
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.y<-5) p.y=H+5;
+      if(p.x<-5) p.x=W+5;
+      if(p.x>W+5) p.x=-5;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* Scroll reveal */
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.1});
+reveals.forEach(r=>io.observe(r));
+
+/* Typed demo animation */
+(function(){
+  const lines = [
+    ['you','open notepad'],['nova','Opening Notepad ✓'],
+    ['you','what time is it?'],['nova','It\'s 11:42 PM.'],
+    ['you','take a screenshot'],['nova','Screenshot saved to Desktop ✓'],
+    ['you','search for best AI tools 2025'],['nova','Searching Google now...'],
+  ];
+  let li=0;
+  setInterval(()=>{
+    const t = document.getElementById('demo-terminal');
+    if(!t) return;
+    const [who,msg]=lines[li%lines.length];
+    const div=document.createElement('div');
+    div.className='term-line';
+    div.innerHTML=`<span class="term-prompt">${who}</span><span class="${who==='you'?'term-cmd':'term-reply'}">  ${who==='you'?'› ':''}${msg}</span>`;
+    const cursor = t.querySelector('.term-cursor')?.closest('.term-line');
+    if(cursor) t.insertBefore(div,cursor);
+    else t.appendChild(div);
+    li++;
+    if(t.children.length>10){t.removeChild(t.firstChild);}
+  },2000);
+})();
+</script>
+</body>
+</html>

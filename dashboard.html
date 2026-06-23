@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Nova AI Dashboard — Send voice or text commands to your PC from anywhere." />
+  <title>Nova AI — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .dash-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(4, 6, 14, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #04060e;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--r-pill);
+      color: var(--muted);
+      font-size: 0.78rem;
+      padding: 6px 16px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .logout-btn:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+    }
+
+    /* ── Main layout ── */
+    .dash-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* ── Sidebar ── */
+    .dash-sidebar {
+      background: rgba(255, 255, 255, 0.02);
+      border-right: 1px solid var(--border);
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .side-section {
+      margin-bottom: 24px;
+    }
+
+    .side-label {
+      font-size: 0.68rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding-left: 12px;
+    }
+
+    .side-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--r-sm);
+      font-size: 0.88rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .side-link:hover {
+      background: rgba(0, 247, 255, 0.06);
+      color: var(--text);
+    }
+
+    .side-link.active {
+      background: rgba(0, 247, 255, 0.1);
+      color: var(--cyan);
+      border-left: 2px solid var(--cyan);
+    }
+
+    .side-icon {
+      font-size: 1.1rem;
+      width: 22px;
+      text-align: center;
+    }
+
+    /* ── Connection bar ── */
+    .conn-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 16px;
+      margin-top: auto;
+    }
+
+    .conn-card label {
+      font-size: 0.72rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .conn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .conn-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.78rem;
+      padding: 8px 10px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .conn-input:focus {
+      border-color: var(--cyan);
+    }
+
+    .conn-btn {
+      background: var(--cyan);
+      color: #04060e;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    /* ── Content area ── */
+    .dash-content {
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    /* ── Portal orb ── */
+    .portal-orb-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .portal-orb {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 32%, #00f7ff 0%, #7b2fff 55%, #04060e 100%);
+      box-shadow: 0 0 50px rgba(0, 247, 255, 0.4), 0 0 100px rgba(123, 47, 255, 0.25);
+      animation: orb-idle 5s ease-in-out infinite;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .portal-orb::after {
+      content: '';
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0, 247, 255, 0.2);
+      animation: ring-spin 4s linear infinite;
+    }
+
+    .portal-orb::before {
+      content: '';
+      position: absolute;
+      inset: -24px;
+      border-radius: 50%;
+      border: 1px dashed rgba(123, 47, 255, 0.15);
+      animation: ring-spin 8s linear infinite reverse;
+    }
+
+    @keyframes orb-idle {
+
+      0%,
+      100% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.04)
+      }
+    }
+
+    @keyframes ring-spin {
+      from {
+        transform: rotate(0deg)
+      }
+
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .portal-orb.listening {
+      animation: orb-listen 0.5s ease-in-out infinite alternate;
+      box-shadow: 0 0 80px rgba(0, 247, 255, 0.7), 0 0 150px rgba(0, 247, 255, 0.3);
+    }
+
+    .portal-orb.thinking {
+      animation: orb-think 1.2s ease-in-out infinite;
+      box-shadow: 0 0 60px rgba(123, 47, 255, 0.6);
+    }
+
+    .portal-orb.speaking {
+      animation: orb-speak 0.3s ease-in-out infinite alternate;
+      box-shadow: 0 0 70px rgba(0, 247, 255, 0.5), 0 0 120px rgba(123, 47, 255, 0.3);
+    }
+
+    @keyframes orb-listen {
+      from {
+        transform: scale(0.95)
+      }
+
+      to {
+        transform: scale(1.08)
+      }
+    }
+
+    @keyframes orb-think {
+
+      0%,
+      100% {
+        transform: scale(1) rotate(0deg)
+      }
+
+      50% {
+        transform: scale(1.06) rotate(3deg)
+      }
+    }
+
+    @keyframes orb-speak {
+      from {
+        transform: scale(1)
+      }
+
+      to {
+        transform: scale(1.06)
+      }
+    }
+
+    .orb-status {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    #orb-label {
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    /* ── Command area ── */
+    .cmd-section {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .mic-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    #mic-btn {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border: none;
+      color: #fff;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0, 247, 255, 0.3);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    #mic-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 40px rgba(0, 247, 255, 0.5);
+    }
+
+    #mic-btn.recording {
+      background: linear-gradient(135deg, #ff2266, #ff6b2b);
+      animation: rec-pulse 0.6s infinite;
+    }
+
+    @keyframes rec-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 24px rgba(255, 34, 102, 0.4)
+      }
+
+      50% {
+        box-shadow: 0 4px 50px rgba(255, 34, 102, 0.8)
+      }
+    }
+
+    #cmd-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-pill);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      padding: 0 24px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    #cmd-input:focus {
+      border-color: var(--cyan);
+    }
+
+    #cmd-input::placeholder {
+      color: rgba(216, 234, 255, 0.3);
+    }
+
+    #send-btn {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    #send-btn:hover {
+      background: rgba(0, 247, 255, 0.1);
+      border-color: var(--cyan);
+      transform: scale(1.05);
+    }
+
+    /* ── Reply card ── */
+    .reply-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 24px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+      min-height: 80px;
+    }
+
+    .reply-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .reply-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    .reply-label {
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    #nova-reply {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── Quick actions ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .quick-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition);
+      text-align: left;
+    }
+
+    .quick-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(0, 247, 255, 0.04);
+      transform: translateY(-2px);
+    }
+
+    .quick-icon {
+      font-size: 1.1rem;
+    }
+
+    /* ── History ── */
+    .history-wrap {
+      margin-top: 20px;
+    }
+
+    .history-title {
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .history-item {
+      background: var(--surface);
+      border-radius: var(--r-sm);
+      padding: 14px 18px;
+      border-left: 3px solid var(--violet);
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+    }
+
+    .history-you {
+      color: var(--cyan);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .history-nova {
+      color: var(--text);
+      opacity: 0.8;
+    }
+
+    .history-time {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── Conn status ── */
+    #conn-status {
+      font-size: 0.78rem;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* ── Responsive ── */
+    @media(max-width:860px) {
+      .dash-main {
+        grid-template-columns: 1fr;
+      }
+
+      #dash-hamburger {
+        display: flex !important;
+      }
+
+      .dash-sidebar {
+        display: none;
+        position: fixed;
+        top: 65px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        z-index: 999;
+        background: rgba(8, 11, 22, 0.98);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        animation: slideIn 0.28s cubic-bezier(0.4,0,0.2,1) forwards;
+        border-right: 1px solid var(--border);
+      }
+
+      .dash-sidebar.open {
+        display: flex !important;
+      }
+
+      .dash-content {
+        padding: 24px 16px;
+      }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+
+    @media(max-width:480px) {
+      .quick-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ════ TOP BAR ════ -->
+  <header class="dash-topbar">
+    <div class="container flex-between">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="nav-hamburger" id="dash-hamburger" onclick="toggleDashMenu()">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="nav-logo" style="font-size:1.2rem;">⬡ NOVA</span>
+        <span class="badge badge-cyan" style="font-size:0.65rem;">DASHBOARD</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:0.85rem;color:var(--muted);" id="user-name">User</span>
+        <div class="user-avatar" id="user-avatar">U</div>
+        <button class="logout-btn" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="dash-main">
+
+    <!-- ════ SIDEBAR ════ -->
+    <aside class="dash-sidebar">
+      <div class="side-section">
+        <div class="side-label">Command</div>
+        <button class="side-link active" onclick="showPanel('portal')">
+          <span class="side-icon">⬡</span> Voice Portal
+        </button>
+        <button class="side-link" onclick="showPanel('portal')">
+          <span class="side-icon">⌨️</span> Text Commands
+        </button>
+      </div>
+      <div class="side-section">
+        <div class="side-label">Quick Actions</div>
+        <button class="side-link" onclick="quickCmd('open notepad')">
+          <span class="side-icon">📝</span> Open Notepad
+        </button>
+        <button class="side-link" onclick="quickCmd('take a screenshot')">
+          <span class="side-icon">📸</span> Screenshot
+        </button>
+        <button class="side-link" onclick="quickCmd('lock the computer')">
+          <span class="side-icon">🔒</span> Lock PC
+        </button>
+        <button class="side-link" onclick="quickCmd('what time is it')">
+          <span class="side-icon">🕐</span> Time
+        </button>
+      </div>
+      <div class="side-section" id="admin-sidebar-section" style="display:none;">
+        <div class="side-label">System</div>
+        <a class="side-link" href="admin.html">
+          <span class="side-icon">⚙️</span> Admin Panel
+        </a>
+      </div>
+      <div class="side-section">
+        <div class="side-label">Account</div>
+        <button class="side-link" onclick="logout()">
+          <span class="side-icon">🚪</span> Sign Out
+        </button>
+      </div>
+
+      <!-- Connection config -->
+      <div class="conn-card">
+        <label>Nova PC Connection</label>
+        <div id="conn-status" style="color:#ff4466;">● Checking...</div>
+        <div class="conn-row">
+          <input class="conn-input" type="text" id="api-url-input" placeholder="https://xxxx.ngrok.io" />
+          <button class="conn-btn" id="connect-btn">Link</button>
+        </div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:8px;">Paste your ngrok URL to control your PC
+          remotely.</div>
+      </div>
+    </aside>
+
+    <!-- ════ MAIN CONTENT ════ -->
+    <main class="dash-content">
+      <div class="cmd-section">
+
+        <!-- Greeting -->
+        <div style="margin-bottom:32px;">
+          <h1 class="display-3" style="margin-bottom:4px;">Good <span class="gradient-text"
+              id="greeting-time">evening</span>, <span id="greeting-name">User</span></h1>
+          <p class="lead" style="font-size:0.92rem;">What would you like Nova to do?</p>
+        </div>
+
+        <!-- Orb -->
+        <div class="portal-orb-wrap">
+          <div class="portal-orb" id="portal-orb" onclick="toggleMic()"></div>
+        </div>
+        <div class="orb-status">
+          <div id="orb-label">TAP ORB OR TYPE A COMMAND</div>
+        </div>
+
+        <!-- Mic + text input -->
+        <div class="mic-row">
+          <button id="mic-btn" title="Speak">🎤</button>
+          <input type="text" id="cmd-input" placeholder="Type a command... (e.g. open spotify)" />
+          <button id="send-btn" title="Send">→</button>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="quick-grid">
+          <button class="quick-btn" onclick="quickCmd('open spotify')">
+            <span class="quick-icon">🎵</span> Spotify
+          </button>
+          <button class="quick-btn" onclick="quickCmd('open chrome')">
+            <span class="quick-icon">🌐</span> Chrome
+          </button>
+          <button class="quick-btn" onclick="quickCmd('take a screenshot')">
+            <span class="quick-icon">📸</span> Screenshot
+          </button>
+          <button class="quick-btn" onclick="quickCmd('lock the computer')">
+            <span class="quick-icon">🔒</span> Lock PC
+          </button>
+          <button class="quick-btn" onclick="quickCmd('set volume 50')">
+            <span class="quick-icon">🔊</span> Vol 50%
+          </button>
+          <button class="quick-btn" onclick="quickCmd('what time is it')">
+            <span class="quick-icon">⏰</span> Time
+          </button>
+          <button class="quick-btn" onclick="quickCmd('search for latest tech news')">
+            <span class="quick-icon">🔎</span> Search
+          </button>
+          <button class="quick-btn" onclick="quickCmd('open calculator')">
+            <span class="quick-icon">🧮</span> Calculator
+          </button>
+        </div>
+
+        <!-- Reply card -->
+        <div class="reply-card">
+          <div class="reply-header">
+            <div class="reply-dot"></div>
+            <div class="reply-label">Nova's Response</div>
+          </div>
+          <div id="nova-reply">Ready and waiting. Tap the orb, press the mic, or type a command below.</div>
+        </div>
+
+        <!-- History -->
+        <div class="history-wrap">
+          <div class="history-title">Command History</div>
+          <div id="cmd-history">
+            <div style="color:var(--muted);font-size:0.85rem;padding:20px 0;text-align:center;">No commands yet. Try
+              saying "open notepad"!</div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/portal.js"></script>
+  <script>
+    /* ── Auth guard ── */
+    requireAuth((session) => {
+      /* ── Populate greeting ── */
+      if (session) {
+        const name = session.name || session.email.split('@')[0];
+        document.getElementById('greeting-name').textContent = name;
+        document.getElementById('user-name').textContent = name;
+        const avatar = document.getElementById('user-avatar');
+        avatar.textContent = (name[0] || 'U').toUpperCase();
+
+        const hour = new Date().getHours();
+        let tod = 'evening';
+        if (hour < 12) tod = 'morning';
+        else if (hour < 17) tod = 'afternoon';
+        document.getElementById('greeting-time').textContent = tod;
+
+        // If user is admin, show Admin Panel link in sidebar
+        if (session.role === 'admin') {
+          const adminSec = document.getElementById('admin-sidebar-section');
+          if (adminSec) adminSec.style.display = 'block';
+        }
+      }
+    });
+
+
+    /* ── Quick command helper ── */
+    function quickCmd(cmd) {
+      const inp = document.getElementById('cmd-input');
+      inp.value = cmd;
+      processCommand(cmd);
+    }
+
+    /* ── Panel switching (future expansion) ── */
+    function showPanel(name) {
+      document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+
+    /* ── Mobile Sidebar Drawer ── */
+    function toggleDashMenu() {
+      const burger = document.getElementById('dash-hamburger');
+      const sidebar = document.querySelector('.dash-sidebar');
+      burger.classList.toggle('active');
+      sidebar.classList.toggle('open');
+    }
+
+    // Close menu when a link inside the sidebar is clicked
+    document.querySelectorAll('.dash-sidebar .side-link, .dash-sidebar a, .dash-sidebar button').forEach(link => {
+      link.addEventListener('click', () => {
+        const burger = document.getElementById('dash-hamburger');
+        const sidebar = document.querySelector('.dash-sidebar');
+        if (sidebar && sidebar.classList.contains('open')) {
+          burger.classList.remove('active');
+          sidebar.classList.remove('open');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

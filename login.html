@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Sign in or create a Nova AI account to access your personal AI assistant portal."/>
+  <title>Nova AI — Sign In</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    body { min-height:100vh; display:flex; flex-direction:column; overflow-x:hidden; overflow-y:auto; }
+
+    /* ── Animated background ── */
+    .auth-bg {
+      position:fixed; inset:0; z-index:0;
+      background: radial-gradient(ellipse 90% 80% at 70% 50%, rgba(123,47,255,0.22) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 60% at 30% 20%, rgba(0,247,255,0.1) 0%, transparent 50%),
+                  var(--bg);
+    }
+    .auth-bg::before {
+      content:'';
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(0,247,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,247,255,0.04) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: grid-drift 18s linear infinite;
+    }
+    /* Floating orbs bg */
+    .bg-orb {
+      position:fixed; border-radius:50%; pointer-events:none; z-index:0;
+      animation: orb-float2 var(--d,8s) ease-in-out infinite;
+    }
+    @keyframes orb-float2 { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-20px) scale(1.04)} }
+    @keyframes grid-drift { from{background-position:0 0} to{background-position:50px 50px} }
+
+    /* ── Layout ── */
+    .auth-wrapper {
+      position:relative; z-index:2;
+      display:grid; grid-template-columns:1fr 1fr;
+      min-height:100vh;
+    }
+
+    /* ── Left promo panel ── */
+    .auth-promo {
+      display:flex; flex-direction:column; justify-content:center;
+      padding:80px 60px;
+      background: linear-gradient(135deg, rgba(123,47,255,0.12) 0%, rgba(0,247,255,0.06) 100%);
+      border-right:1px solid var(--border);
+    }
+    .auth-promo-orb {
+      width:100px; height:100px; border-radius:50%; margin-bottom:40px;
+      background: radial-gradient(circle at 38% 32%, #00f7ff 0%, #7b2fff 55%, #04060e 100%);
+      box-shadow: 0 0 50px rgba(0,247,255,0.4), 0 0 100px rgba(123,47,255,0.2);
+      animation: orb-float 5s ease-in-out infinite;
+    }
+    @keyframes orb-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+    .promo-feature { display:flex; align-items:flex-start; gap:16px; margin-bottom:28px; }
+    .promo-icon { font-size:1.4rem; margin-top:3px; flex-shrink:0; }
+    .promo-feature h4 { font-family:'Orbitron',monospace; font-size:0.85rem; font-weight:700; letter-spacing:1px; margin-bottom:5px; color:var(--cyan); }
+    .promo-feature p  { font-size:0.85rem; color:var(--muted); line-height:1.5; }
+
+    /* ── Right auth panel ── */
+    .auth-form-panel {
+      display:flex; align-items:center; justify-content:center;
+      padding:60px 48px;
+      overflow-y:auto;
+    }
+    .auth-card {
+      width:100%; max-width:420px;
+    }
+    .auth-logo { font-family:'Orbitron',monospace; font-size:1.4rem; font-weight:900; color:var(--cyan); text-shadow:0 0 20px var(--cyan); margin-bottom:8px; }
+    .auth-subtitle { color:var(--muted); font-size:0.9rem; margin-bottom:36px; }
+
+    /* ── Tabs ── */
+    .auth-tabs { display:flex; gap:4px; background:rgba(255,255,255,0.04); border-radius:var(--r-sm); padding:5px; margin-bottom:32px; border:1px solid var(--border); }
+    .auth-tab {
+      flex:1; text-align:center; padding:10px; border-radius:8px;
+      font-family:'Inter',sans-serif; font-size:0.88rem; font-weight:600;
+      color:var(--muted); cursor:pointer; border:none; background:transparent;
+      transition: all var(--transition);
+    }
+    .auth-tab.active { background:linear-gradient(135deg,var(--violet),var(--cyan)); color:#04060e; }
+
+    /* ── Error ── */
+    .auth-error {
+      display:none; background:rgba(255,34,102,0.1); border:1px solid rgba(255,34,102,0.3);
+      border-radius:var(--r-sm); padding:12px 16px; color:#ff4466; font-size:0.88rem; margin-bottom:20px;
+    }
+
+    /* ── Divider ── */
+    .or-divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--muted); font-size:0.8rem; }
+    .or-divider::before,.or-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* ── Social buttons ── */
+    .social-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px; }
+    .social-btn {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      padding:11px; border-radius:var(--r-sm); border:1px solid var(--border);
+      background:var(--surface); color:var(--text); font-size:0.85rem; font-weight:500;
+      cursor:pointer; transition:all var(--transition);
+    }
+    .social-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+
+    /* ── Back link ── */
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:0.83rem; margin-bottom:28px; transition:color var(--transition); }
+    .back-link:hover { color:var(--cyan); }
+
+    /* ── Password toggle ── */
+    .pass-wrap { position:relative; }
+    .pass-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:1rem; padding:4px; }
+
+    /* ── Submit btn ── */
+    .submit-btn {
+      width:100%; padding:15px; font-size:1rem; font-weight:700;
+      font-family:'Inter',sans-serif; letter-spacing:0.5px;
+      background:linear-gradient(135deg,var(--violet),var(--cyan));
+      color:#04060e; border:none; border-radius:var(--r-pill);
+      cursor:pointer; margin-top:8px;
+      transition:transform var(--transition), box-shadow var(--transition);
+      box-shadow:0 4px 24px rgba(0,247,255,0.25);
+    }
+    .submit-btn:hover { transform:translateY(-2px); box-shadow:0 8px 40px rgba(0,247,255,0.4); }
+    .submit-btn:disabled { opacity:0.7; cursor:wait; }
+
+    /* ── Responsive ── */
+    @media(max-width:860px) {
+      .auth-wrapper { grid-template-columns:1fr; }
+      .auth-promo { display:none; }
+      .auth-form-panel { padding:40px 24px; min-height:100vh; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-bg"></div>
+
+<!-- Floating bg orbs -->
+<div class="bg-orb" style="width:400px;height:400px;top:-100px;right:-100px;background:radial-gradient(circle,rgba(123,47,255,0.12),transparent 70%);--d:9s;"></div>
+<div class="bg-orb" style="width:300px;height:300px;bottom:-80px;left:-80px;background:radial-gradient(circle,rgba(0,247,255,0.09),transparent 70%);--d:12s;animation-delay:2s;"></div>
+
+<div class="auth-wrapper">
+
+  <!-- ── Left Promo Panel ── -->
+  <div class="auth-promo">
+    <div class="auth-promo-orb"></div>
+    <div class="display-3 gradient-text" style="margin-bottom:8px;">Your AI.<br/>Your Rules.</div>
+    <p class="lead" style="margin-bottom:40px;font-size:0.95rem;">Nova runs on your machine. Private, fast, and always online.</p>
+
+    <div class="promo-feature">
+      <span class="promo-icon">🎤</span>
+      <div>
+        <h4>Voice Commands</h4>
+        <p>Speak naturally. Nova understands and acts instantly.</p>
+      </div>
+    </div>
+    <div class="promo-feature">
+      <span class="promo-icon">🌐</span>
+      <div>
+        <h4>Access from Anywhere</h4>
+        <p>Encrypted ngrok tunnel. Use from phone, tablet, or browser globally.</p>
+      </div>
+    </div>
+    <div class="promo-feature">
+      <span class="promo-icon">🔒</span>
+      <div>
+        <h4>100% Private</h4>
+        <p>All AI processing happens on your hardware. No cloud APIs needed.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right Form Panel ── -->
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <a href="index.html" class="back-link">← Back to Home</a>
+      <div class="auth-logo">⬡ NOVA</div>
+      <div class="auth-subtitle" id="auth-subtitle">Welcome back — sign in to continue.</div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login"    onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab"        data-tab="register" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Error -->
+      <div class="auth-error" id="auth-error"></div>
+
+      <!-- ── LOGIN PANEL ── -->
+      <div id="login-panel">
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email</label>
+            <input class="form-input" type="email" id="login-email" placeholder="you@example.com" required autocomplete="email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-pass">Password</label>
+            <div class="pass-wrap">
+              <input class="form-input" type="password" id="login-pass" placeholder="••••••••" required autocomplete="current-password"/>
+              <button type="button" class="pass-toggle" onclick="togglePass('login-pass',this)">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="submit-btn" id="login-btn">Sign In →</button>
+        </form>
+        <div class="or-divider">or continue with</div>
+        <div class="social-row">
+          <button class="social-btn" onclick="demoLogin()">🚀 Demo Account</button>
+          <button class="social-btn" onclick="switchTab('register')">✦ Register Free</button>
+        </div>
+      </div>
+
+      <!-- ── REGISTER PANEL ── -->
+      <div id="register-panel" style="display:none;">
+        <form onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Your Name</label>
+            <input class="form-input" type="text" id="reg-name" placeholder="Alex Nova" required autocomplete="name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email</label>
+            <input class="form-input" type="email" id="reg-email" placeholder="you@example.com" required autocomplete="email"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-pass">Password</label>
+            <div class="pass-wrap">
+              <input class="form-input" type="password" id="reg-pass" placeholder="Min. 6 characters" required autocomplete="new-password"/>
+              <button type="button" class="pass-toggle" onclick="togglePass('reg-pass',this)">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-confirm">Confirm Password</label>
+            <input class="form-input" type="password" id="reg-confirm" placeholder="Repeat password" required autocomplete="new-password"/>
+          </div>
+          <button type="submit" class="submit-btn" id="register-btn">Create Account →</button>
+        </form>
+      </div>
+
+      <p style="text-align:center;font-size:0.78rem;color:var(--muted);margin-top:24px;">
+        By continuing you agree to Nova's privacy-first local storage policy.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  /* If already logged in, redirect to dashboard */
+  if (getSession()) window.location.href = 'dashboard.html';
+
+  /* Check if coming from #register hash */
+  if (location.hash === '#register') switchTab('register');
+
+  function togglePass(id, btn) {
+    const el = document.getElementById(id);
+    if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+    else { el.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  async function demoLogin() {
+    /* Create and log in with a demo account */
+    const r = await register('Demo User', 'demo@nova.ai', 'demo123');
+    if (!r.ok) {
+      await login('demo@nova.ai', 'demo123');
+    }
+    window.location.href = 'dashboard.html';
+  }
+</script>
+</body>
+</html>
