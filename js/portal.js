@@ -28,7 +28,7 @@ async function loadGlobalNovaUrl() {
   if (typeof firebase !== 'undefined' && isFirebaseConfigured()) {
     try {
       const url = await getGlobalNovaUrl();
-      if (url && !NOVA_API) {
+      if (url) {
         NOVA_API = url;
         if (apiUrlInput) apiUrlInput.value = url;
         localStorage.setItem('nova_api_url', url);
