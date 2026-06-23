@@ -516,12 +516,13 @@
         top: 65px;
         left: 0;
         bottom: 0;
-        width: 280px;
+        width: 285px;
         z-index: 999;
         background: rgba(8, 11, 22, 0.98);
         box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         animation: slideIn 0.28s cubic-bezier(0.4,0,0.2,1) forwards;
         border-right: 1px solid var(--border);
+        overflow-y: auto;
       }
 
       .dash-sidebar.open {
@@ -529,7 +530,49 @@
       }
 
       .dash-content {
-        padding: 24px 16px;
+        padding: 20px 16px;
+      }
+
+      .cmd-section {
+        max-width: 100%;
+      }
+
+      .portal-orb {
+        width: 110px;
+        height: 110px;
+      }
+
+      .mic-row {
+        gap: 8px;
+      }
+
+      #mic-btn, #send-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.1rem;
+      }
+
+      #cmd-input {
+        font-size: 0.88rem;
+        padding: 0 14px;
+      }
+
+      .reply-card {
+        padding: 16px;
+      }
+
+      .dash-topbar .container {
+        padding: 0 12px;
+      }
+
+      .logout-btn {
+        display: none;
+      }
+
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.78rem;
       }
     }
 
@@ -541,6 +584,36 @@
     @media(max-width:480px) {
       .quick-grid {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .portal-orb {
+        width: 90px;
+        height: 90px;
+      }
+
+      .portal-orb::after {
+        inset: -8px;
+      }
+
+      .portal-orb::before {
+        inset: -16px;
+      }
+
+      h1.display-3 {
+        font-size: 1.5rem !important;
+      }
+
+      .quick-btn {
+        padding: 10px 10px;
+        font-size: 0.78rem;
+      }
+
+      .conn-card {
+        padding: 12px;
+      }
+
+      .conn-input {
+        font-size: 0.72rem;
       }
     }
   </style>
@@ -607,6 +680,14 @@
         </button>
       </div>
 
+      <!-- Download section -->
+      <div class="side-section">
+        <div class="side-label">Get the App</div>
+        <a class="side-link" href="assets/nova-desktop-assistant.zip" download>
+          <span class="side-icon">⬇️</span> Download Nova for PC
+        </a>
+      </div>
+
       <!-- Connection config -->
       <div class="conn-card">
         <label>Nova PC Connection</label>
@@ -617,6 +698,9 @@
         </div>
         <div style="font-size:0.68rem;color:var(--muted);margin-top:8px;">Paste your ngrok URL to control your PC
           remotely.</div>
+        <a href="assets/nova-desktop-assistant.zip" download style="display:block;margin-top:10px;font-size:0.72rem;color:var(--cyan);text-decoration:none;">
+          ⬇️ Download Nova Desktop Assistant
+        </a>
       </div>
     </aside>
 
